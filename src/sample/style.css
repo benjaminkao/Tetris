@@ -1,0 +1,9 @@
+#root {
+    -fx-background-color: #ffffff;
+    -fx-font-family: "Trebuchet MS", Helvetica, sans-serif;
+    -fx-font-size: 12;
+}
+
+.game-panel {
+    -fx-background-color: #323841;
+}
