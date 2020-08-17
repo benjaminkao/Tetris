@@ -1,9 +1,47 @@
 #root {
-    -fx-background-color: #ffffff;
+    -fx-background-color: #222831;
     -fx-font-family: "Trebuchet MS", Helvetica, sans-serif;
     -fx-font-size: 12;
 }
 
 .game-panel {
     -fx-background-color: #323841;
+}
+
+.canvas-label {
+    -fx-pref-height: 45;
+    -fx-font-size: 28;
+    -fx-text-fill: #ffffff;
+}
+
+.game-btn {
+    -fx-pref-width: 150;
+    -fx-pref-height: 50;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-font-size: 20;
+}
+
+#game-title {
+    -fx-text-alignment: center;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 64;
+}
+
+.game-screen {
+    -fx-background-radius: 10;
+    -fx-background-color: #222831;
+    -fx-border-radius: 10;
+    -fx-border-color: #ffffff;
+    -fx-spacing: 25;
+}
+
+#game-over-label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 42;
+}
+
+#game-over-score {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 30;
 }

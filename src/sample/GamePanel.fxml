@@ -8,12 +8,16 @@
 <?import javafx.scene.layout.StackPane?>
 <BorderPane fx:controller="sample.GameController" stylesheets="@style.css"
             xmlns:fx="http://javafx.com/fxml" id="root">
+    <top>
+        <Label text="TETRIS" id="game-title" prefHeight="75" BorderPane.alignment="TOP_CENTER" alignment="CENTER"/>
+    </top>
     <left>
         <VBox BorderPane.alignment="CENTER">
             <BorderPane.margin>
                 <Insets topRightBottomLeft="25"/>
             </BorderPane.margin>
-            <StackPane styleClass="game-panel" prefWidth="100" prefHeight="100">
+            <Label text="Hold Piece: " styleClass="canvas-label"/>
+            <StackPane styleClass="game-panel" prefWidth="150" prefHeight="150">
                 <Canvas fx:id="holdPanel" height="100" width="100"/>
             </StackPane>
         </VBox>
@@ -23,19 +27,30 @@
             <BorderPane.margin>
                 <Insets right="25" left="25"/>
             </BorderPane.margin>
-            <StackPane styleClass="game-panel" prefHeight="600" prefWidth="300" maxHeight="600" maxWidth="200">
+            <StackPane styleClass="game-panel" prefHeight="600" prefWidth="300" maxHeight="600" maxWidth="300">
                 <Canvas fx:id="gamePanel" height="690" width="300" />
+                <VBox fx:id="gameOverScreen" id="game-over-screen" styleClass="game-screen"
+                      prefHeight="220" prefWidth="250" maxHeight="220" maxWidth="250" visible="true" alignment="CENTER">
+                    <Label fx:id="gameOverLabel" id="game-over-label" text="Game Start" alignment="CENTER" textAlignment="CENTER"/>
+                    <Label fx:id="gameOverScoreLabel" id="game-over-score" alignment="CENTER" textAlignment="CENTER" visible="false"/>
+                    <Button fx:id="resetBtn" styleClass="game-btn" text="Play" alignment="CENTER" textAlignment="CENTER" onAction="#resetGame"/>
+                </VBox>
             </StackPane>
         </VBox>
     </center>
     <right>
-        <VBox BorderPane.alignment="CENTER">
+        <VBox BorderPane.alignment="TOP_LEFT" alignment="TOP_LEFT">
             <BorderPane.margin>
-                <Insets topRightBottomLeft="25"/>
+                <Insets top="25" right="50"/>
             </BorderPane.margin>
-            <StackPane styleClass="game-panel" prefWidth="100" prefHeight="100">
+            <Label text="Next Piece: " styleClass="canvas-label"/>
+            <StackPane styleClass="game-panel" prefWidth="150" prefHeight="150">
                 <Canvas fx:id="nextPanel" height="100" width="100"/>
             </StackPane>
+            <Label fx:id="levelLabel" styleClass="canvas-label"/>
+            <Label fx:id="scoreLabel" styleClass="canvas-label"/>
+            <Label fx:id="scoreRowsLabel" styleClass="canvas-label"/>
+            <Label fx:id="scoreTetrisLabel" styleClass="canvas-label"/>
         </VBox>
     </right>
 

@@ -159,22 +159,6 @@ public class Tetromino {
         return  mostLeft / GameController.numCols;
     }
 
-
-    public double getRightMostPosition()
-    {
-        double mostRight = 0;
-
-        for(Pieces piece : pieces)
-        {
-            if(piece.x > mostRight)
-            {
-                mostRight = piece.x;
-            }
-        }
-
-        return mostRight / GameController.numCols;
-    }
-
     public double getTopPosition()
     {
         double mostTop = Integer.MAX_VALUE;
