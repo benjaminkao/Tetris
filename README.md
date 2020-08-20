@@ -11,6 +11,14 @@ I wanted to learn how to create a game loop and improve my collision detection c
 
 
 ## Latest Update:
+
+### August 20, 2020
+User can play now; Fixed some bugs
+- Before, user could not play because bot was always on. Added checkbox to turn bot on/off so now user can play.
+- Fixed bug where tetrominoes would fall faster every time a new game was started even after level was reset.
+
+## Previous Updates:
+
 ### August 16, 2020
 Improved Bot; Added Leveling; Updated UI
 - Improved bot decision making
@@ -20,7 +28,6 @@ Improved Bot; Added Leveling; Updated UI
 - Added "Play Again" feature
 
 
-## Previous Updates:
 ### August 15, 2020
 Bare Bones Tetris Game and Bot Completed
 - Tetris game is working, but have not implemented scoring and UI is basic
