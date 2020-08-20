@@ -6,13 +6,14 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.CheckBox?>
 <BorderPane fx:controller="sample.GameController" stylesheets="@style.css"
             xmlns:fx="http://javafx.com/fxml" id="root">
     <top>
         <Label text="TETRIS" id="game-title" prefHeight="75" BorderPane.alignment="TOP_CENTER" alignment="CENTER"/>
     </top>
     <left>
-        <VBox BorderPane.alignment="CENTER">
+        <VBox BorderPane.alignment="CENTER" spacing="25">
             <BorderPane.margin>
                 <Insets topRightBottomLeft="25"/>
             </BorderPane.margin>
@@ -20,6 +21,7 @@
             <StackPane styleClass="game-panel" prefWidth="150" prefHeight="150">
                 <Canvas fx:id="holdPanel" height="100" width="100"/>
             </StackPane>
+            <CheckBox fx:id="botCheckBox" text="Enable Bot"/>
         </VBox>
     </left>
     <center>

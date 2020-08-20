@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -52,6 +53,8 @@ public class GameController {
     private Label scoreTetrisLabel;
     @FXML
     private Button resetBtn;
+    @FXML
+    private CheckBox botCheckBox;
 
     //Dimension variables
     public static double gameHeight;
@@ -78,6 +81,7 @@ public class GameController {
 
 
     //Bot variables
+    private boolean botEnabled;
     private Bot bot = new Bot ();
     private boolean botMoveHold = false;
     private int botMoveOrientation;
@@ -104,6 +108,139 @@ public class GameController {
 
         gameLoop = new Timeline ();
         gameLoop.setCycleCount ( Timeline.INDEFINITE );
+
+        KeyFrame gameFrame = new KeyFrame ( Duration.seconds ( 0.017 ), actionEvent -> {
+
+            if(atTop())
+            {
+                bot.sendGameOverSignal ();
+                gameLoop.pause();
+                gameOverScoreLabel.setText("Final Score: " + gameScore);
+                gameOverScreen.setVisible(true);
+                gameOverScoreLabel.setVisible(true);
+                botCheckBox.setDisable(false);
+                running = false;
+            }
+
+            if ( atBottom ( 0 ) || hitGrid ( 0 ) )
+            {       //If tetromino has reached the bottom
+                usedHold = false;
+                //Add tetromino points to grid
+                addToGrid ();
+
+                //Check if any rows have been filled
+                checkGridRows ();
+
+
+                //Set next tetromino to current tetromino
+                current = next;
+
+                //Get a new next tetromino
+                next = new Tetromino ( rand.nextInt ( 7 ) + 1, numCols / 2, 1 );
+
+                if(botEnabled)
+                {
+                    //Update bot variables
+                    bot.setHoldTetromino ( hold );
+                    bot.setGridScreenshot ( grid );
+                    bot.setCurrentTetromino ( current );
+                    bot.setNextTetromino ( next );
+
+                    //Signal bot that game variables are ready to be red
+                    bot.signalBot ();
+                }
+
+                graphicsNext.clearRect(0, 0, holdWidth, holdHeight);
+                Tetromino tmp = new Tetromino(next.getType(), 1, 1);
+                setGraphicsNextColor ( next.getType () );
+                for (Pieces piece : tmp.getPieces ())
+                {
+                    graphicsNext.fillRect ( piece.x, piece.y, Main.PIECESIZE, Main.PIECESIZE );
+                    graphicsNext.strokeRect ( piece.x, piece.y, Main.PIECESIZE, Main.PIECESIZE );
+                }
+            }
+
+            if(botEnabled && botMoveAvailable.availablePermits () > 0)
+            {       //Check to see if bot move is available first before acquiring to prevent blocking
+                try
+                {
+                    botMoveAvailable.acquire();
+                } catch (InterruptedException e)
+                {
+                    e.printStackTrace ();
+                }
+                if(botMoveHold && hold == null)
+                {       //First hold, so bot hasn't predicted next piece
+                    holdTetromino();
+                    botMoveHold = false;
+
+                    //Update bot variables
+                    bot.setHoldTetromino ( hold );
+                    bot.setGridScreenshot ( grid);
+                    bot.setCurrentTetromino ( current );
+                    bot.setNextTetromino ( next );
+
+                    //Signal bot that it needs to make another move
+                    bot.signalBot ();
+                } else if(botMoveHold)
+                {
+                    holdTetromino ();
+                    botMoveHold = false;
+                    botMoveAvailable.release();
+                }
+                else
+                {
+                    if ( botMoveOrientation != -1 )
+                    {       //Check that orientation doesn't indicate null hold
+//                        if ( current.orientation > botMoveOrientation )
+//                        {
+//                            current.rotateLeft ();
+//                        }
+//                        else if ( current.orientation < botMoveOrientation )
+//                        {
+//                            current.rotateRight ();
+//                        }
+                        current.setOrientation ( botMoveOrientation );
+                    }
+
+                    while ( botMoveLeftMostPosition > current.getLeftMostPosition () && !atRightSide () )
+                    {
+                        current.incrementX ( Main.PIECESIZE );
+                    }
+                    while ( botMoveLeftMostPosition < current.getLeftMostPosition () && !atLeftSide () )
+                    {
+                        current.decrementX ( Main.PIECESIZE );
+                    }
+
+//                    if ( botMoveLeftMostPosition != current.getLeftMostPosition () || botMoveOrientation != current.orientation )
+//                    {   //If bot hasn't moved tetromino enough, then signal that there is still a move available
+//                        botMoveAvailable.release ();
+//                    }
+//                    else
+//                    {
+                    hardDropTetromino ();
+//                    }
+                }
+            }
+
+
+            graphicsGame.clearRect ( 0, 0, gameWidth, gameHeight );
+
+            graphicsGame.setFill(Color.WHITE);
+            graphicsGame.fillRect(0, 3 * Main.PIECESIZE - 1, gameWidth, 1);
+
+            drawGrid ();
+
+            drawTetromino ( current );
+
+            if ( !atBottom ( 0 ) && !hitGrid ( 0 ) )
+            {    //Make sure that tetromino hasn't hit bottom or any pieces due to user movement
+                current.incrementY ( level / 5 + 2);
+            }
+
+        } );
+
+        gameLoop.getKeyFrames ().add(gameFrame);
     }
 
     @FXML
@@ -164,11 +301,21 @@ public class GameController {
             graphicsNext.fillRect ( piece.x, piece.y, Main.PIECESIZE, Main.PIECESIZE );
             graphicsNext.strokeRect ( piece.x, piece.y, Main.PIECESIZE, Main.PIECESIZE );
         }
-        bot = new Bot ();
-        bot.setGridScreenshot ( grid );
-        bot.setCurrentTetromino ( current );
-        bot.setNextTetromino ( next );
-        bot.sendController ( this );
+
+        //If botCheckBox is selected
+        botEnabled = botCheckBox.isSelected ();
+
+        if(botEnabled)
+        {
+            bot = new Bot ();
+            bot.setGridScreenshot ( grid );
+            bot.setCurrentTetromino ( current );
+            bot.setNextTetromino ( next );
+            bot.sendController ( this );
+        }
+
+        //Disable botCheckBox
+        botCheckBox.setDisable(true);
 
         runGame ( !resetBtn.getText ().equals ( "Play" ) );
         running = true;
@@ -177,141 +324,14 @@ public class GameController {
     private void runGame (boolean restart)
     {
 
-        KeyFrame gameFrame = new KeyFrame ( Duration.seconds ( 0.017 ), actionEvent -> {
+        if(botEnabled)
+        {
+            botThread = new Thread ( bot );
+            botThread.setDaemon ( true );
+            botThread.start ();
+        }
 
-            if(atTop())
-            {
-                bot.sendGameOverSignal ();
-                gameLoop.stop();
-                gameOverScoreLabel.setText("Final Score: " + (gameScore - 100));
-                gameOverScreen.setVisible(true);
-                gameOverScoreLabel.setVisible(true);
-                running = false;
-            }
-
-            if ( atBottom ( 0 ) || hitGrid ( 0 ) )
-            {       //If tetromino has reached the bottom
-                usedHold = false;
-                //Add tetromino points to grid
-                addToGrid ();
-
-                //Check if any rows have been filled
-                checkGridRows ();
-
-
-                //Set next tetromino to current tetromino
-                current = next;
-
-                //Get a new next tetromino
-                next = new Tetromino ( rand.nextInt ( 7 ) + 1, numCols / 2, 1 );
-
-
-                //Update bot variables
-                bot.setHoldTetromino ( hold );
-                bot.setGridScreenshot ( grid);
-                bot.setCurrentTetromino ( current );
-                bot.setNextTetromino ( next );
-
-                //Signal bot that game variables are ready to be red
-                bot.signalBot();
-
-                graphicsNext.clearRect(0, 0, holdWidth, holdHeight);
-                Tetromino tmp = new Tetromino(next.getType(), 1, 1);
-                setGraphicsNextColor ( next.getType () );
-                for (Pieces piece : tmp.getPieces ())
-                {
-                    graphicsNext.fillRect ( piece.x, piece.y, Main.PIECESIZE, Main.PIECESIZE );
-                    graphicsNext.strokeRect ( piece.x, piece.y, Main.PIECESIZE, Main.PIECESIZE );
-                }
-            }
-
-            if(botMoveAvailable.availablePermits () > 0)
-            {       //Check to see if bot move is available first before acquiring to prevent blocking
-                try
-                {
-                    botMoveAvailable.acquire();
-                } catch (InterruptedException e)
-                {
-                    e.printStackTrace ();
-                }
-                if(botMoveHold && hold == null)
-                {       //First hold, so bot hasn't predicted next piece
-                    holdTetromino();
-                    botMoveHold = false;
-
-                    //Update bot variables
-                    bot.setHoldTetromino ( hold );
-                    bot.setGridScreenshot ( grid);
-                    bot.setCurrentTetromino ( current );
-                    bot.setNextTetromino ( next );
-
-                    //Signal bot that it needs to make another move
-                    bot.signalBot ();
-                } else if(botMoveHold)
-                {
-                    holdTetromino ();
-                    botMoveHold = false;
-                    botMoveAvailable.release();
-                }
-                else
-                {
-                    if ( botMoveOrientation != -1 )
-                    {       //Check that orientation doesn't indicate null hold
-//                        if ( current.orientation > botMoveOrientation )
-//                        {
-//                            current.rotateLeft ();
-//                        }
-//                        else if ( current.orientation < botMoveOrientation )
-//                        {
-//                            current.rotateRight ();
-//                        }
-                        current.setOrientation ( botMoveOrientation );
-                    }
-
-                    while ( botMoveLeftMostPosition > current.getLeftMostPosition () && !atRightSide () )
-                    {
-                        current.incrementX ( Main.PIECESIZE );
-                    }
-                    while ( botMoveLeftMostPosition < current.getLeftMostPosition () && !atLeftSide () )
-                    {
-                        current.decrementX ( Main.PIECESIZE );
-                    }
-
-//                    if ( botMoveLeftMostPosition != current.getLeftMostPosition () || botMoveOrientation != current.orientation )
-//                    {   //If bot hasn't moved tetromino enough, then signal that there is still a move available
-//                        botMoveAvailable.release ();
-//                    }
-//                    else
-//                    {
-                        hardDropTetromino ();
-//                    }
-                }
-            }
-
-
-            graphicsGame.clearRect ( 0, 0, gameWidth, gameHeight );
-
-            graphicsGame.setFill(Color.WHITE);
-            graphicsGame.fillRect(0, 3 * Main.PIECESIZE - 1, gameWidth, 1);
-
-            drawGrid ();
-
-            drawTetromino ( current );
-
-            if ( !atBottom ( 0 ) && !hitGrid ( 0 ) )
-            {    //Make sure that tetromino hasn't hit bottom or any pieces due to user movement
-                current.incrementY ( level / 5 + 2);
-            }
-
-        } );
-
-//        botThread = new Thread ( bot );
-//        botThread.setDaemon ( true );
-//        botThread.start ();
-
-        gameLoop.getKeyFrames ().add ( gameFrame );
-        gameLoop.play ();
-
+        gameLoop.play();
     }
 
     /**
